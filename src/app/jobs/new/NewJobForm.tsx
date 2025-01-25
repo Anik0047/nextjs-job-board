@@ -21,6 +21,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { X } from "lucide-react";
 import { draftToMarkdown } from "markdown-draft-js";
 import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
 
 export default function NewJobForm() {
     const form = useForm<CreateJobValues>();
@@ -36,27 +37,37 @@ export default function NewJobForm() {
         formState: { isSubmitting },
     } = form;
 
+    const router = useRouter();
+
     async function onSubmit(values: CreateJobValues) {
-        console.log("Form submitted!");
-        console.log(JSON.stringify(values, null, 2));
+        try {
+            const res = await fetch("/api/jobs", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(values),
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                console.error("Server Error:", errorData);
+                throw new Error("Failed to submit the job posting");
+            }
+
+            const responseData = await res.json();
+            console.log("Job created successfully:", responseData);
+
+            // Redirect to the job-submitted page
+            router.push("/job-submitted");
+        } catch (error) {
+            console.error(error);
+            alert("Something went wrong, please try again.");
+        }
     }
 
 
-    // async function onSubmit(values: CreateJobValues) {
-    //     const formData = new FormData();
 
-    //     Object.entries(values).forEach(([key, value]) => {
-    //         if (value) {
-    //             formData.append(key, value);
-    //         }
-    //     });
-
-    //     try {
-    //         await createJobPosting(formData);
-    //     } catch (error) {
-    //         alert("Something went wrong, please try again.");
-    //     }
-    // }
 
     return (
         <main className="m-auto my-10 max-w-3xl space-y-10">
@@ -130,17 +141,17 @@ export default function NewJobForm() {
                         <FormField
                             control={control}
                             name="companyLogo"
-                            render={({ field: { value, ...fieldValues } }) => (
+                            render={({ field: { value, ...fieldProps } }) => (
                                 <FormItem>
-                                    <FormLabel>Company logo</FormLabel>
+                                    <FormLabel>Company Logo</FormLabel>
                                     <FormControl>
                                         <Input
-                                            {...fieldValues}
+                                            {...fieldProps}
                                             type="file"
                                             accept="image/*"
                                             onChange={(e) => {
                                                 const file = e.target.files?.[0];
-                                                fieldValues.onChange(file);
+                                                fieldProps.onChange(file); // Store the selected file
                                             }}
                                         />
                                     </FormControl>
@@ -148,6 +159,7 @@ export default function NewJobForm() {
                                 </FormItem>
                             )}
                         />
+
                         <FormField
                             control={control}
                             name="locationType"

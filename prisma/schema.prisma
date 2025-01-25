@@ -8,6 +8,8 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+
+
 model Job {
   id               String   @id @default(auto()) @map("_id") @db.ObjectId
   slug             String   @unique
@@ -25,7 +27,6 @@ model Job {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  @@fulltext([title, companyName, locationType, location, type])
   @@map("jobs")
 }
 
